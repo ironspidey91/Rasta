@@ -31,16 +31,22 @@
       if (this._raf) cancelAnimationFrame(this._raf);
     },
 
-    setData: function (order, color, animate) {
+    setData: function (order, color, animate, onDone) {
       if (this._raf) {
         cancelAnimationFrame(this._raf);
         this._raf = 0;
       }
       this._order = order || [];
       this._color = color || '#38e0b0';
+      this._onDone = onDone || null;
       this._count = animate ? 0 : this._order.length;
       this._reset();
-      if (animate && this._order.length) this._animate();
+      if (animate && this._order.length) {
+        this._animate();
+      } else if (this._onDone) {
+        this._onDone();
+        this._onDone = null;
+      }
     },
 
     clear: function () {
@@ -73,6 +79,10 @@
           self._raf = 0;
           self._count = total;
           self._paint(0, total, true);
+          if (self._onDone) {
+            self._onDone();
+            self._onDone = null;
+          }
         }
       }
 

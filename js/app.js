@@ -119,8 +119,16 @@
     els.animateToggle.addEventListener('change', function () {
       state.animate = els.animateToggle.checked;
       if (state.result) {
-        exploreLayer.setData(state.result.order, ALGORITHMS[state.algorithm].color,
-          state.animate);
+        if (state.animate) {
+          routeLayer.clearLayers();
+          var result = state.result;
+          exploreLayer.setData(result.order, ALGORITHMS[state.algorithm].color, true, function () {
+            drawRoute(result);
+          });
+        } else {
+          exploreLayer.setData(state.result.order, ALGORITHMS[state.algorithm].color, false);
+          drawRoute(state.result);
+        }
       }
     });
     els.minorToggle.addEventListener('change', function () {
@@ -497,9 +505,19 @@
 
     state.result = result;
     renderResult(result);
-    drawRoute(result);
     drawSnapLines();
-    exploreLayer.setData(result.order, ALGORITHMS[state.algorithm].color, state.animate);
+
+    if (state.animate) {
+      // Clear previous route so the exploration animation plays on a clean map,
+      // then draw the shortest path only after the animation finishes.
+      routeLayer.clearLayers();
+      exploreLayer.setData(result.order, ALGORITHMS[state.algorithm].color, true, function () {
+        drawRoute(result);
+      });
+    } else {
+      drawRoute(result);
+      exploreLayer.setData(result.order, ALGORITHMS[state.algorithm].color, false);
+    }
 
     if (options.fit && result.found && result.path.length > 1) {
       var points = result.path.map(function (index) { return graph.nodes[index]; });
