@@ -23,6 +23,25 @@
     offlineNotice: false
   };
 
+  /* Short "ting" sound synthesised with the Web Audio API — no file needed. */
+  var audioCtx = null;
+  function playTing() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      var osc = audioCtx.createOscillator();
+      var gain = audioCtx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(1800, audioCtx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.12);
+      gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 0.25);
+    } catch (e) { /* audio not available — fail silently */ }
+  }
+
   var graph = null;
   var map = null;
   var tileLayer = null;
@@ -513,10 +532,12 @@
       routeLayer.clearLayers();
       exploreLayer.setData(result.order, ALGORITHMS[state.algorithm].color, true, function () {
         drawRoute(result);
+        if (result.found) playTing();
       });
     } else {
       drawRoute(result);
       exploreLayer.setData(result.order, ALGORITHMS[state.algorithm].color, false);
+      if (result.found) playTing();
     }
 
     if (options.fit && result.found && result.path.length > 1) {
