@@ -374,9 +374,12 @@
   function setEndpoint(kind, latlng, options) {
     options = options || {};
     if (!graph) return;
-    var snap = options.node != null
-      ? { node: options.node, metres: 0 }
-      : graph.nearestNode(latlng.lat, latlng.lng);
+    var snap;
+    if (options.node != null && graph.routable && graph.routable[options.node]) {
+      snap = { node: options.node, metres: 0 };
+    } else {
+      snap = graph.nearestNode(latlng.lat, latlng.lng);
+    }
     if (!snap || snap.node == null) return;
 
     var existing = state[kind];

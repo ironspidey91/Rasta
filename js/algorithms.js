@@ -166,7 +166,49 @@
       var reverseList = lookup.get(reverseKey);
       if (reverseList && reverseList.length) this.reverse[e] = reverseList[0];
     }
+
+    // Mark nodes in the largest strongly connected component so that
+    // nearestNode() only snaps to routable intersections.  One-way dead-ends
+    // (about 1–2 % of the graph) are excluded to avoid "no route found" when
+    // both endpoints are valid but separated by a directed cut.
+    this.routable = this._buildSCC();
   }
+
+  RoadGraph.prototype._buildSCC = function () {
+    var n = this.n;
+    var fwd = new Uint8Array(n);
+    var bwd = new Uint8Array(n);
+    var i, v, e;
+
+    // Forward BFS from node 0.
+    var queue = [0];
+    fwd[0] = 1;
+    while (queue.length) {
+      v = queue.shift();
+      for (i = this.outStart[v]; i < this.outStart[v + 1]; i++) {
+        var u = this.eTo[this.outEdges[i]];
+        if (!fwd[u]) { fwd[u] = 1; queue.push(u); }
+      }
+    }
+
+    // Backward BFS from node 0.
+    queue = [0];
+    bwd[0] = 1;
+    while (queue.length) {
+      v = queue.shift();
+      for (i = this.inStart[v]; i < this.inStart[v + 1]; i++) {
+        var w = this.eFrom[this.inEdges[i]];
+        if (!bwd[w]) { bwd[w] = 1; queue.push(w); }
+      }
+    }
+
+    // Routable = forward ∩ backward (strongly connected to node 0).
+    var routable = new Uint8Array(n);
+    for (i = 0; i < n; i++) {
+      routable[i] = fwd[i] & bwd[i];
+    }
+    return routable;
+  };
 
   RoadGraph.prototype.latLng = function (index) {
     return this.nodes[index];
@@ -178,11 +220,13 @@
 
   RoadGraph.prototype.nearestNode = function (lat, lon) {
     var nodes = this.nodes;
+    var routable = this.routable;
     var kx = Math.cos(lat * Math.PI / 180) * 111320;
     var ky = 110540;
     var best = -1;
     var bestDistance = Infinity;
     for (var i = 0; i < this.n; i++) {
+      if (!routable[i]) continue;
       var dx = (nodes[i][1] - lon) * kx;
       var dy = (nodes[i][0] - lat) * ky;
       var d2 = dx * dx + dy * dy;
