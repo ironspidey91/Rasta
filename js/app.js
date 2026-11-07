@@ -284,9 +284,13 @@
     exploreLayer = new ExploreLayer(graph.nodes);
     map.addLayer(exploreLayer);
 
+    // Custom pane for route/snap/blocked lines so they render above the
+    // exploration canvas (which sits in the default overlayPane at z-index 400).
+    map.createPane('routePane').style.zIndex = 450;
+
     // SVG for route/snap/blocked lines: crisp at every zoom and directly
     // clickable, which is what powers "click the route to block it".
-    routeRenderer = L.svg({ padding: 0.5 });
+    routeRenderer = L.svg({ padding: 0.5, pane: 'routePane' });
 
     snapLayer = L.layerGroup().addTo(map);
     routeLayer = L.layerGroup().addTo(map);
