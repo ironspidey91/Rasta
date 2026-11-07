@@ -1,7 +1,7 @@
 # Rasta — Shortest Path Visualizer
 
 An interactive route-finding demo built on **real OpenStreetMap road data** for
-north and central Kolkata. Pick any two points on the map, then watch and
+north, central and east Kolkata. Pick any two points on the map, then watch and
 compare four shortest-path algorithms running in your browser.
 
 Everything the routing needs is local: the road graph (`data/graph.json`) and
@@ -26,7 +26,7 @@ because the browser blocks `fetch()` of the graph file over `file://`.
 - **Click anywhere** on the map: first click sets **A**, second sets **B**.
   Clicks snap to the nearest road node, and a dashed line shows the short walk
   from your click to the snapped node. Drag either pin to move it.
-- **Search places**: the search boxes know 180 offline landmarks (stations,
+- **Search places**: the search boxes know 273 offline landmarks (stations,
   hospitals, colleges, parks, malls…) and snap them to the road network.
 - **Switch algorithms at any time**: Dijkstra, A*, Bellman–Ford, Bidirectional
   Dijkstra. The current start and destination are re-used, so the numbers are
@@ -62,7 +62,7 @@ route as Dijkstra.
 
 Floyd–Warshall was the other candidate in the plan. It computes *all-pairs*
 shortest paths and needs a `V × V` distance matrix — for this graph that is
-around 1.3 billion entries before any other overhead, which is not viable in a
+around 9 billion entries before any other overhead, which is not viable in a
 browser. Bidirectional Dijkstra keeps the same optimal result and is a fair
 fourth comparison, so the project uses it and the comparison table stays
 meaningful. (Floyd–Warshall would make sense on a small hand-made grid; that is
@@ -70,12 +70,12 @@ a different demo.)
 
 ## Data
 
-- **Area:** `22.560, 88.355 → 22.630, 88.410` (south, west, north, east) —
-  Shyambazar, Bagbazar, Cossipore, Belgachia, Dum Dum south, Ultadanga,
-  Kankurgachi, Sealdah, Rajabazar, and the western edge of Salt Lake.
-- **Source:** OpenStreetMap via the Overpass API, downloaded on 2026-11-05.
+- **Area:** `22.555, 88.355 → 22.635, 88.495` (south, west, north, east) —
+  Shyambazar, Bagbazar, Cossipore, Belgachia, Dum Dum, Ultadanga, Kankurgachi,
+  Sealdah, Rajabazar, Salt Lake, New Town and Rajarhat.
+- **Source:** OpenStreetMap via the Overpass API, downloaded on 2026-11-07.
   Tiles: `tile.openstreetmap.org` with attribution.
-- **Size:** 36,283 nodes, 76,319 directed edges, 675 named roads, 2.6 MB JSON.
+- **Size:** 95,280 nodes, 195,433 directed edges, 947 named roads, 6.7 MB JSON.
 - **Licence:** © OpenStreetMap contributors, [ODbL](https://www.openstreetmap.org/copyright).
 - The graph is reduced to its largest weakly connected component, so any two
   snapped clicks can be routed. One-way streets, roundabouts and turn
@@ -159,5 +159,7 @@ they are optimistic compared with live-traffic estimates.
 - Static travel times only — no live traffic, signals, or time-of-day effects.
 - The short walk from a click to the snapped road node is shown but not added
   to the route totals, so all algorithms are compared on the same road network.
+- Coverage is the downloaded bounding box above; clicks outside it snap to the
+  nearest edge node, and the dashed connector shows the remaining walk.
 - No turn restrictions or turn penalties; one-way tags are honoured.
 - Tile labels and context need internet; routing does not.

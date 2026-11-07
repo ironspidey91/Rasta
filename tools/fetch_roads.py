@@ -25,7 +25,7 @@ import time
 import urllib.parse
 import urllib.request
 
-DEFAULT_BBOX = (22.560, 88.355, 22.630, 88.410)  # S, W, N, E (north Kolkata)
+DEFAULT_BBOX = (22.555, 88.355, 22.635, 88.495)  # S, W, N, E (Kolkata)
 OVERPASS_ENDPOINTS = [
     "https://maps.mail.ru/osm/tools/overpass/api/interpreter",
     "https://overpass-api.de/api/interpreter",
@@ -187,7 +187,7 @@ def main():
     parser.add_argument("--bbox", default=",".join(str(v) for v in DEFAULT_BBOX),
                         help="south,west,north,east")
     parser.add_argument("--out", default="data/graph.json")
-    parser.add_argument("--tiles", type=int, default=2,
+    parser.add_argument("--tiles", type=int, default=3,
                         help="split the area into tiles x tiles requests")
     parser.add_argument("--no-places", action="store_true")
     args = parser.parse_args()
@@ -327,7 +327,7 @@ def main():
         print(f"  {len(places)} searchable places", flush=True)
 
     meta = {
-        "name": "North & Central Kolkata",
+        "name": "North, central & east Kolkata",
         "bbox": [south, west, north, east],
         "generated": time.strftime("%Y-%m-%d"),
         "source": "OpenStreetMap via Overpass API",
