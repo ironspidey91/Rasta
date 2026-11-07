@@ -25,21 +25,60 @@
 
   /* Short "ting" sound synthesised with the Web Audio API — no file needed. */
   var audioCtx = null;
+  var hasPendingTing = false;
+
+  function unlockAudio() {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume().then(function () {
+          if (hasPendingTing) {
+            hasPendingTing = false;
+            triggerSound();
+          }
+        }).catch(function () {});
+      } else if (hasPendingTing) {
+        hasPendingTing = false;
+        triggerSound();
+      }
+    } catch (e) {}
+  }
+  ['click', 'pointerdown', 'keydown', 'touchstart', 'mousemove'].forEach(function (event) {
+    window.addEventListener(event, unlockAudio, { passive: true });
+  });
+
   function playTing() {
     try {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === 'suspended') {
+        hasPendingTing = true;
+        audioCtx.resume().then(function () {
+          if (hasPendingTing) {
+            hasPendingTing = false;
+            triggerSound();
+          }
+        }).catch(function () {});
+      } else {
+        triggerSound();
+      }
+    } catch (e) { /* audio not available — fail silently */ }
+  }
+
+  function triggerSound() {
+    try {
+      var now = audioCtx.currentTime;
       var osc = audioCtx.createOscillator();
       var gain = audioCtx.createGain();
       osc.type = 'sine';
-      osc.frequency.setValueAtTime(1800, audioCtx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.12);
-      gain.gain.setValueAtTime(0.18, audioCtx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.25);
+      osc.frequency.setValueAtTime(1800, now);
+      osc.frequency.exponentialRampToValueAtTime(1200, now + 0.12);
+      gain.gain.setValueAtTime(0.22, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
       osc.connect(gain);
       gain.connect(audioCtx.destination);
-      osc.start(audioCtx.currentTime);
-      osc.stop(audioCtx.currentTime + 0.25);
-    } catch (e) { /* audio not available — fail silently */ }
+      osc.start(now);
+      osc.stop(now + 0.28);
+    } catch (e) {}
   }
 
   var graph = null;
@@ -514,6 +553,13 @@
       updateEmptyState();
       return;
     }
+
+    /* Guard: if both clicks snapped to the exact same graph node, warn the user
+       rather than silently producing a zero-length "route". */
+    if (state.start.node === state.end.node && !options._isDemo) {
+      toast('Start and destination snapped to the same road node — try clicking farther apart.');
+    }
+
     var result = graph.route(
       state.algorithm,
       state.start.node,
@@ -942,7 +988,7 @@
 
     setEndpoint('start', startLatLng, { node: startNode, label: startPlace ? startPlace[0] : null });
     setEndpoint('end', endLatLng, { node: endNode, label: endPlace ? endPlace[0] : null });
-    runCurrent({ fit: true });
+    runCurrent({ fit: true, _isDemo: true });
   }
 
   function clearRouteVisuals() {
